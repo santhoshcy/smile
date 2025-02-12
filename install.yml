@@ -1,0 +1,36 @@
+- name: Setup Smile Website Server
+  hosts: smile_server
+  become: yes  # Run as root
+
+  tasks:
+    # Install Docker, Git, and Nginx
+    - name: Install Docker, Git, and Nginx
+      apt:
+        name: 
+          - docker.io
+          - git
+          - nginx
+        state: present
+        update_cache: yes
+
+    # Ensure Docker is running
+    - name: Start and Enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    # Clone Smile Website Code from GitHub
+    - name: Clone Smile Website Repository
+      git:
+        repo: "https://github.com/santhoshcy/smile.git"
+        dest: /var/www/smile
+        version: main  # Change to main if needed
+
+    # Build Docker Image
+    - name: Build Docker Image
+      command: docker build -t smile-website /var/www/smile/
+
+    # Run Smile Website in a Docker Container
+    - name: Run Smile Website Container
+      command: docker run -d -p 80:80 --name smile-container smile-website
