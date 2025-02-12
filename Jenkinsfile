@@ -1,29 +1,47 @@
 pipeline {
     agent any
+
+    environment {
+        DOCKER_IMAGE = "santhoshcy/smile"  // Change to your Docker Hub repo
+        DOCKER_CREDENTIALS_ID = "dockerhub"  // The ID we added in Jenkins
+    }
+
     stages {
-        stage('Clone Repository') {
+        stage('Checkout Code') {
             steps {
                 git 'https://github.com/santhoshcy/smile.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh 'docker build -t smile-website .'
+                    sh "docker build -t $DOCKER_IMAGE ."
                 }
             }
         }
-        stage('Push to Docker Hub') {
+
+        stage('Login to Docker Hub') {
             steps {
-                withDockerRegistry([credentialsId: 'docker-hub-credentials', url: '']) {
-                    sh 'docker tag smile-website santhoshcy/smile-website:latest'
-                    sh 'docker push santhoshcy/smile-website:latest'
+                script {
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
+                    }
                 }
             }
         }
-        stage('Deploy to EC2') {
+
+        stage('Push Image to Docker Hub') {
             steps {
-                sh 'ssh -i smile-key.pem ubuntu@<EC2-IP> "docker run -d -p 80:80 santhoshcy/smile-website:latest"'
+                script {
+                    sh "docker push $DOCKER_IMAGE"
+                }
+            }
+        }
+
+        stage('Clean Up') {
+            steps {
+                sh "docker rmi $DOCKER_IMAGE"
             }
         }
     }
