@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: smile-website-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: smile-website
+  template:
+    metadata:
+      labels:
+        app: smile-website
+    spec:
+      containers:
+      - name: smile-website
+        image: santhoshcy/smile-website:latest # Your Docker Hub image!
+        ports:
+        - containerPort: 80
+
