@@ -33,11 +33,8 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Navigate to the correct directory and run the container
-                    dir('smile') {
-                        // Run the Docker container from the image
-                        docker.run('smile-website', '-d -p 80:80 --name smile-container')
-                    }
+                    // Run the Docker container from the built image
+                    docker.image('smile-website').run('-d -p 80:80 --name smile-container')
                 }
             }
         }
