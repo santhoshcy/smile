@@ -2,35 +2,77 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = 'dockerhub'  // Replace with the Jenkins credentials ID for Docker Hub
+        // Define Docker image name
+        IMAGE_NAME = 'smile-website'
+        DOCKER_REGISTRY = 'docker.io'
     }
 
     stages {
-        stage('Docker Hub Validation') {
+        stage('Clone Repository') {
+            steps {
+                // Clone the GitHub repository
+                git 'https://github.com/santhoshcy/smile.git'
+            }
+        }
+
+        stage('Build Docker Image') {
             steps {
                 script {
-                    try {
-                        // Get Docker Hub credentials from Jenkins credentials store
-                        withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_HUB_USERNAME', passwordVariable: 'DOCKER_HUB_PASSWORD')]) {
-                            
-                            // Debugging output to check the credentials being used
-                            echo "Using Docker Hub username: ${DOCKER_HUB_USERNAME}"
+                    // Build the Docker image from the static website
+                    docker.build("${IMAGE_NAME}")
+                }
+            }
+        }
 
-                            // Attempt Docker login
-                            def loginCommand = "echo ${DOCKER_HUB_PASSWORD} | docker login -u ${DOCKER_HUB_USERNAME} --password-stdin"
-                            def loginResult = sh(script: loginCommand, returnStatus: true)
+        stage('Run Tests (Optional)') {
+            steps {
+                script {
+                    // Run basic static analysis or tests (if any)
+                    echo "Running tests or static code analysis..."
+                    // Placeholder for tests if needed
+                }
+            }
+        }
 
-                            if (loginResult == 0) {
-                                echo "Docker Hub credentials validated successfully."
-                            } else {
-                                error "Docker Hub login failed. Check credentials."
-                            }
-                        }
-                    } catch (Exception e) {
-                        error "An error occurred while validating Docker Hub credentials: ${e.getMessage()}"
+        stage('Push Docker Image to Registry') {
+            steps {
+                script {
+                    // Login to Docker registry (optional for public repositories)
+                    docker.withRegistry('', 'docker-hub-credentials') {
+                        docker.image("${IMAGE_NAME}").push()
                     }
                 }
             }
+        }
+
+        stage('Deploy to Server') {
+            steps {
+                script {
+                    // Deploy the website to the target server
+                    // Assuming you're using a Docker container to host the website
+                    sh '''
+                        docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}
+                        docker run -d -p 80:80 --name smile-website ${DOCKER_REGISTRY}/${IMAGE_NAME}
+                    '''
+                }
+            }
+        }
+
+        stage('Post-Deployment Verification') {
+            steps {
+                script {
+                    // Verify that the website is running correctly
+                    echo "Verifying the deployment..."
+                    // Placeholder for any HTTP health check or verification
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            // Cleanup if any Docker containers were left
+            sh 'docker ps -a | grep "smile-website" | awk "{print \$1}" | xargs docker rm -f'
         }
     }
 }
