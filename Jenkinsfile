@@ -9,11 +9,23 @@ pipeline {
             }
         }
 
+        stage('List Files') {
+            steps {
+                script {
+                    // List files in the workspace to confirm Dockerfile presence
+                    sh 'ls -l smile'
+                }
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image
-                    docker.build('smile-website')
+                    // Navigate to the correct directory where Dockerfile exists
+                    dir('smile') {
+                        // Build the Docker image
+                        docker.build('smile-website')
+                    }
                 }
             }
         }
@@ -21,8 +33,11 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Run the Docker container from the image
-                    docker.run('smile-website', '-d -p 80:80 --name smile-container')
+                    // Navigate to the correct directory and run the container
+                    dir('smile') {
+                        // Run the Docker container from the image
+                        docker.run('smile-website', '-d -p 80:80 --name smile-container')
+                    }
                 }
             }
         }
