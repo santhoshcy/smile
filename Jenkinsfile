@@ -1,47 +1,20 @@
 pipeline {
     agent any
-
-    environment {
-        DOCKER_IMAGE = "santhoshcy/smile"  // Change to your Docker Hub repo
-        DOCKER_CREDENTIALS_ID = "dockerhub"  // The ID we added in Jenkins
-    }
-
     stages {
-        stage('Checkout Code') {
+        stage('Clone Repository') {
             steps {
-                git 'https://github.com/santhoshcy/smile'
+                script {
+                    sh 'rm -rf smile || true'  // Clean previous repo if exists
+                    sh 'git clone https://github.com/santhoshcy/smile.git'
+                    sh 'ls -la smile/'  // Verify contents after cloning
+                }
             }
         }
-
         stage('Build Docker Image') {
             steps {
                 script {
-                    sh "docker build -t $DOCKER_IMAGE ."
+                    sh 'cd smile && docker build -t santhoshcy/smile .'
                 }
-            }
-        }
-
-        stage('Login to Docker Hub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                    }
-                }
-            }
-        }
-
-        stage('Push Image to Docker Hub') {
-            steps {
-                script {
-                    sh "docker push $DOCKER_IMAGE"
-                }
-            }
-        }
-
-        stage('Clean Up') {
-            steps {
-                sh "docker rmi $DOCKER_IMAGE"
             }
         }
     }
