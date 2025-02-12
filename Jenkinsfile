@@ -11,7 +11,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 // Clone the GitHub repository
-                git 'https://github.com/santhoshcy/smile.git'
+                git clone 'https://github.com/santhoshcy/smile.git'
             }
         }
 
