@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/santhoshcy/smile.git'
+                git 'https://github.com/santhoshcy/smile'
             }
         }
 
