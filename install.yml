@@ -6,7 +6,7 @@
     # Install Docker, Git, and Nginx
     - name: Install Docker, Git, and Nginx
       apt:
-        name: 
+        name:
           - docker.io
           - git
           - nginx
@@ -20,17 +20,36 @@
         state: started
         enabled: yes
 
+    # Stop and Disable Nginx
+    - name: Stop and Disable Nginx
+      service:
+        name: nginx
+        state: stopped
+        enabled: no
+
     # Clone Smile Website Code from GitHub
     - name: Clone Smile Website Repository
       git:
         repo: "https://github.com/santhoshcy/smile.git"
         dest: /var/www/smile
-        version: main  # Change to main if needed
+        version: main
 
     # Build Docker Image
     - name: Build Docker Image
       command: docker build -t smile-website /var/www/smile/
 
+    # Remove Existing Container (if any)
+    - name: Remove Existing Smile Website Container
+      command: docker rm -f smile-container
+      ignore_errors: yes
+
     # Run Smile Website in a Docker Container
     - name: Run Smile Website Container
-      command: docker run -d -p 80:80 --name smile-container smile-website
+      docker_container:
+        name: smile-container
+        image: smile-website
+        state: started
+        recreate: yes
+        published_ports:
+          - "80:80"
+        restart_policy: always
